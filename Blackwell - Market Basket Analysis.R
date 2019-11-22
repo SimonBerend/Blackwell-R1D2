@@ -1,7 +1,8 @@
-
+# Get them packages
 if (!require("pacman")) install.packages("pacman")
-#pacman will not accept a character vector so the same packages are repeated
-pacman::p_load("ggplot2", "arules", "arulesViz", "graphics", "RColorBrewer")
+
+pacman::p_load("ggplot2", "arules", "arulesViz",
+               "graphics", "RColorBrewer", "e1071")
 
 
 
@@ -11,10 +12,9 @@ trans <- read.transactions("ElectronidexTransactions2017.csv",
                            sep = ",",
                            rm.duplicates = T)
 
-transTyp <- read.transactions("TransactionsTypes.csv",
+transTyp <- read.transactions("TransactionsTypes2.csv",
                            format =  "basket",
-                           sep = ";",
-                           rm.duplicates = F)
+                           sep = ";")
 
 transX <- read.transactions("TransactionsX.csv",
                               format =  "basket",
@@ -29,12 +29,12 @@ inspect(head(transTyp))
 head(transTyp)
 head(trans)
 length(trans)
-size(trans)
+size(transX)
 LIST(transTyp)
 LIST(trans)
 itemLabels(transTyp)
 itemLabels(trans[80])
-summary(trans)
+summary(transX)
 str(trans)
 
 ###   Further Exploration   ###
@@ -56,24 +56,26 @@ itemFrequencyPlot(trans,
                           ylab="Item Frequency (Relative)") 
 
 arules::itemFrequencyPlot(transX,
-                          topN=10,
+                          topN=17,
                           col=brewer.pal(8,'Pastel2'),
                           main='Sales - Electronidex - Tuned Set',
                           type="relative",
                           ylab="Item Frequency (Relative)") 
 
 arules::itemFrequencyPlot(transTyp,
-                          topN=10,
+                          topN=14,
                           col=brewer.pal(8,'Pastel2'),
                           main='Sales - Electronidex - Product by Type',
                           type="relative",
                           ylab="Item Frequency (Relative)") 
 
-
+?itemFrequencyPlot
 itemFrequencyPlot(trans,
                   type = "relative",  
                   support = 0.1,
                   sort = "decreasing")
+
+
 
 
 ### ..and another explo ###
@@ -98,143 +100,124 @@ moreRules <- apriori (trans,
                                       conf = 0.5))
 
 xRules <- apriori (transX,
-                     parameter = list(supp = 0.03,
-                                      conf = 0.5))
+                     parameter = list(supp = 0.01,
+                                      conf = 0.5,
+                                      minlen = 2
+                                      ))
 
 
-inspect(typRules)
-str(moreRules)
-summary(moreRules)
+inspect(head(sort(moreRules, by = "lift")))
+plot(head(sort(moreRules, by = "lift")),
+     method = "graph",
+     main = "Common transactions Electronidex")
 
-  #########################################
- ######   ?????????                 ######
-#########################################
+plot(xRules, verbose = TRUE)
 
+plot(xRules,
+     method = "two-key plot",
+     control = list (main = "1731 Transaction Rules",
+                     col = wes_palette("Zissou1", 7, type = "continuous")))
+     
+     
 
-mac.a.Rules <- subset(xRules, 
-                  lhs %in% "iMac")
+inspect(head(sort(xRules, by = "support")))
 
-mac.c.Rules <- subset(xRules, 
-                      rhs %in% "iMac")
-
-
-?subset
-inspect(head(sort( mac.a.Rules,
-                   by = "support")))
-
-inspect(head(sort( mac.c.Rules,
-                   by = "lift")))
-
-
-
-  #####################################
- #### RULES FOR SPECIFIC PRODUCTS ####
-#####################################
-
-### Rules for iMac   ###
-imacRules <- apriori (data = trans,
-                      parameter = list (supp=0.005,
-                                        conf = 0.5),
-                      appearance = list (rhs="iMac"))
-### Rules for HP Laptop   ###
-hpRules <- apriori (data = trans,
-                      parameter = list (supp=0.01,
-                                        conf = 0.5),
-                      appearance = list (rhs="HP Laptop"))
-inspect(hpRules) 
-### Rules for CYBERPOWER Gamer Desktop   ### NOTE SUPPORT *-10 ###
-cyberRules <- apriori (data = trans,
-                      parameter = list (supp=0.001,
-                                        conf = 0.5),
-                      appearance = list (rhs="CYBERPOWER Gamer Desktop"))
-
-###   X   Rules for iMac    ###
-imacRules <- apriori (data = transX,
-                      parameter = list (supp=0.02,
-                                        conf = 0.5),
-                      appearance = list (rhs="iMac"))
-
-imac.Rules <- apriori (data = transX,
-                      parameter = list (supp=0.02,
-                                        conf = 0.5),
-                      appearance = list (lhs="iMac"))
-
-is.redundant(imacRules)
-imacRules <- imacRules[!is.redundant(imacRules)]
-
-plot(imacRules, method = "graph")
-plot(imacRules, method = "grouped")
-?plot
-plot(imac.Rules, method = "graph")
-plot(imac.Rules, method = "grouped")
-
-### Rules for GAMER   ###
-gameRules <- apriori (data = transX,
-                     parameter = list (supp=0.002,
-                                       conf = 0.4,
-                                       minlen = 2),
-                     appearance = list (lhs ="CYBER Gamer"))
-
-game.Rules <- apriori (data = transX,
-                      parameter = list (supp=0.002,
-                                        conf = 0.45,
-                                        minlen = 2),
-                      appearance = list (rhs ="CYBER Gamer"))
-
-inspect(sort(game.Rules, by = "lift"))
-
-inspect(head(sort( game.Rules, by = "lift")))
-
-        
-
-plot(game.Rules, method = "graph")
-
-
-###  Rules for Lenovo Desktop Computer  ###
-lenoRules <- subset(moreRules, 
-                    rhs %in% "Lenovo Desktop Computer")
-
-inspect(sort( lenoRules, by = "support"))
-
-### rules lhs ASUS 2 Monitor   ###
-a2Rules <- subset(moreRules, 
-                    lhs %in% "ASUS 2 Monitor")
-
-inspect(head(sort( a2Rules,
-                   by = "support")))
-
-inspect(head(sort( a2Rules,
-                   by = "lift")))
-
-
-
-   ###  ###############################  ###
-  ###  ### PROCESS THOSE RULE SETS ###  ###
- ###  ###############################  ###
-
-### Check Redundant Rules ### repeat rmv a couple of times ###
+### Check Redundant Rules ###
 is.redundant(typRules)
 typRules <- typRules[!is.redundant(typRules)]
 
-is.redundant(imacRules)
+is.redundant(moreRules)
 moreRules <- moreRules[!is.redundant(moreRules)]
 
 is.redundant(xRules)
 xRules <- xRules[!is.redundant(xRules)]
 
 
- ###################################
-###################################
+  #####################################
+ #### RULES FOR SPECIFIC PRODUCTS ####
+#####################################
+
+  ####################################
+ ######         iMac           ######
+####################################
+
+imacRules <- apriori (data = transX,
+                      parameter = list (supp=0.025,
+                                        conf = 0.5),
+                      appearance = list (rhs="iMac"))
+
+imac.Rules <- apriori (data = transX,
+                       parameter = list (supp=0.001,
+                                         conf = 0.3,
+                                         minlen = 2),
+                       appearance = list (lhs="iMac"))
+
+is.redundant(imacRules)
+imacRules <- imacRules[!is.redundant(imacRules)]
 
 
-keyRules <- subset(moreRules, lhs %pin% "Keyboard")
-inspect(head(sort(keyRules,
-                  by = "support")))
+plot(imacRules, method = "graph", main = "Patterns iMac (rhs)")
+plot(imac.Rules, method = "graph", main = "Patterns iMac (lhs)")
 
-inspect(head(sort( moreRules,
-              by = "lift")))
+inspect(sort(imacRules, by = "lift"))
 
-inspect(head(sort( moreRules,
-                   by = "confidence")))
+
+  ####################################
+ ######         Gamer         #######
+####################################
+
+
+gameRules <- apriori (data = transX,
+                      parameter = list (supp=0.002,
+                                        conf = 0.46,
+                                        minlen = 2),
+                      appearance = list (rhs ="CYBER Gamer"))
+
+
+game.Rules <- apriori (data = transX,
+                       parameter = list (supp=0.002,
+                                         conf = 0.45,
+                                         minlen = 2),
+                       appearance = list (lhs ="CYBER Gamer"))
+
+
+## R hs
+inspect(sort(gameRules, by = "lift"))
+plot(gameRules, method = "graph", main = "Patterns CYBER Gamer (rhs)")
+
+## L hs
+inspect(sort(game.Rules, by = "lift"))
+plot(game.Rules, method = "graph", main = "Patterns CYBER Gamer (lhs)")
+
+
+
+
+  ####################################
+ ######       Accessories      ######
+####################################
+
+
+accRules <- apriori (data = transX,
+                      parameter = list (supp=0.002,
+                                        conf = 0.46,
+                                        minlen = 2),
+                      appearance = list (rhs ="Accessories"))
+
+
+acc.Rules <- apriori (data = transX,
+                       parameter = list (supp=0.002,
+                                         conf = 0.45,
+                                         minlen = 2),
+                       appearance = list (lhs ="Accessories"))
+
+
+## R hs
+inspect(sort(accRules, by = "lift"))
+plot(accRules, method = "graph", main = "Patterns Accessories (rhs)")
+
+## L hs
+inspect(sort(acc.Rules, by = "lift"))
+plot(acc.Rules, method = "graph", main = "Patterns Accessories (lhs)")
+
 
 

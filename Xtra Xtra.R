@@ -21,7 +21,10 @@ str(flowers)
 
 help(boxplot)
 
-boxplot(flowers$Sepal.Length, main="Sepal Length", sub=paste("Outlier rows: ", boxplot.stats(flowers$Sepal.Length)$out))
+boxplot(flowers$Sepal.Length,
+        main="Sepal Length", 
+        sub=paste("Outlier rows: ", 
+        boxplot.stats(flowers$Sepal.Length)$out))
 boxplot(flowers$Sepal.Length)$out
 
 outSepLen<- boxplot(flowers$Sepal.Length, plot= FALSE)$out

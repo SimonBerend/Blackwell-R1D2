@@ -285,8 +285,7 @@ ggplot(pred.incomplete, aes(age,
 ###  postResample   ###
 postResample(test.and.pred.a$predict.brands.c5.a, testing.a$brand)
 
-help("postResample")
-  
+
 
 #### how many people want Sony/Acer?
 
